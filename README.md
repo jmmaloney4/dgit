@@ -1,0 +1,2 @@
+# dgit
+Distributed Git
