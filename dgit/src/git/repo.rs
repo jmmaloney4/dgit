@@ -14,6 +14,7 @@ trait Repository {
     fn read<ID>(id: ID) -> dyn ObjectReader;
 }
 
+#[derive(Debug)]
 enum LocalRepositoryPath {
     Full(PathBuf),
     Bare(PathBuf),
@@ -24,19 +25,13 @@ impl LocalRepositoryPath {
     where
         P: AsRef<Path>,
     {
-        let plus_dot_git = path.as_ref().join("/.git/").canonicalize().context(Io)?;
-        if plus_dot_git.exists() {
-            // Strip .git and use this path
-            let mut path = plus_dot_git;
-            path.pop();
+        let path = path.as_ref().canonicalize().context(Io)?;
+
+        if path.join(".git").exists() {
             Ok(Self::Full(path))
-        } else if path.as_ref().join("/HEAD").exists() {
-            let mut path = plus_dot_git;
-            path.pop();
+        } else if path.join("/HEAD").exists() {
             Ok(LocalRepositoryPath::Bare(path))
         } else {
-            let mut path = plus_dot_git;
-            path.pop();
             Err(LocalRepositoryError::RepositoryNotFound { path })
         }
     }
@@ -67,7 +62,7 @@ impl LocalRepository {
     pub fn repo_path(&self) -> PathBuf {
         match &self.path {
             LocalRepositoryPath::Bare(rv) => rv.clone(),
-            LocalRepositoryPath::Full(base) => base.join("/.git/"),
+            LocalRepositoryPath::Full(base) => base.join(".git"),
         }
     }
 }

@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use clap::{crate_authors, crate_description, crate_name, crate_version, App, Arg};
 use dgit::LocalRepository;
 
@@ -17,10 +19,15 @@ fn main() {
 
     match matches.values_of("arg") {
         None => (),
-        Some(values) => values.for_each(|x| {
-            println!("{}", x);
-            LocalRepository::new(x).unwrap().objects().for_each(|x| {
-                println!("{}", hex::encode(x.unwrap()));
+        Some(values) => values.for_each(|path| {
+            match LocalRepository::new(path) {
+                Err(e) => panic!("{}", e),
+                Ok(repo) => repo,
+            }
+            .objects()
+            .for_each(|x| match x {
+                Ok(x) => println!("{}", hex::encode(x)),
+                Err(e) => eprintln!("{}", e),
             });
         }),
     }
