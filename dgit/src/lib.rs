@@ -1,3 +1,8 @@
+mod error;
+mod git;
+
+pub use git::repo::LocalRepository;
+
 #[cfg(test)]
 mod tests {
     #[test]

@@ -6,3 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+bytes = "1.1"
+futures = "0.3"
+hex = "0.4"
+itertools = "0.10"
+multihash = "0.15"
+snafu = "0.6"
+url = "2.2"
