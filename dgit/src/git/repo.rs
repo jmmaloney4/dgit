@@ -79,27 +79,26 @@ impl LocalRepository {
             Err(e) => Box::new(std::iter::once(Err(LocalRepositoryError::Io { source: e }))),
 
             // Otherwise now handle direcotry of directories, grouping objects by the first byte of their hash.
-            Ok(objects) => {
-                let x = objects
-                    .map_ok(|group| {
+            Ok(prefixes) => Box::new(
+                prefixes
+                    .map_ok(|dir| {
                         // First byte of the hash
                         let prefix = {
-                            let decoded =
-                                hex::decode(os_to_utf8(group.file_name())?).context(Hex)?;
+                            let decoded = hex::decode(os_to_utf8(dir.file_name())?).context(Hex)?;
                             if decoded.len() == 1 {
                                 decoded[0]
                             } else {
                                 return Err(LocalRepositoryError::InvalidObjectDBFormat {
-                                    path: group.path(),
+                                    path: dir.path(),
                                 });
                             }
                         };
 
-                        // Handle directory of objects
-                        Ok(group
-                            .path()
-                            .read_dir()
-                            .context(Io)?
+                        // List the prefix directory
+                        let files = dir.path().read_dir().context(Io)?;
+
+                        // Parse filenames
+                        Ok(files
                             .map_ok(move |object| {
                                 // Ensure object is actually a file
                                 if !object.metadata().context(Io)?.is_file() {
@@ -121,14 +120,13 @@ impl LocalRepository {
                             .flatten())
                     })
                     .flatten()
-                    .flatten_ok();
-
-                Box::new(x.flatten())
-            }
+                    .flatten_ok()
+                    .flatten(),
+            ),
         }
     }
 
-    fn read<ID>(id: ID) {
+    fn read(id: Vec<u8>) {
         todo!()
     }
 }
